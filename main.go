@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"encoding/binary"
 	"sync"
 	"io"
@@ -9,7 +10,7 @@ import (
 )
 
 type Graph struct {
-	nodes []Node
+	Nodes []Node
 	log io.Writer
 
 	appendLock sync.Locker
@@ -21,7 +22,7 @@ func Open(path string) (*Graph, os.Error) {
 		return nil, err
 	}
 
-	g := &Graph{nodes: []Node{}, log: log, appendLock: &sync.Mutex{}}
+	g := &Graph{Nodes: []Node{}, log: log, appendLock: &sync.Mutex{}}
 
 	for {
 		len := int16(0)
@@ -40,7 +41,7 @@ func Open(path string) (*Graph, os.Error) {
 		node := Node{}
 		proto.Unmarshal(buf, &node)
 
-		g.nodes = append(g.nodes, node)
+		g.Nodes = append(g.Nodes, node)
 	}
 
 	return g, nil
@@ -50,8 +51,8 @@ func (g *Graph) Add(node Node) os.Error {
 	g.appendLock.Lock()
 	defer g.appendLock.Unlock()
 
-	node.Id = proto.Int64(int64(len(g.nodes)))
-	g.nodes = append(g.nodes, node)
+	node.Id = proto.Int64(int64(len(g.Nodes)))
+	g.Nodes = append(g.Nodes, node)
 
 	if data, err := proto.Marshal(&node); err != nil {
 		return err
@@ -74,5 +75,9 @@ func main() {
 	}
 	if err := g.Add(Node{Value: proto.String("test")}); err != nil {
 		panic(err)
+	}
+
+	for _, node := range g.Nodes {
+		fmt.Printf("%s\n", node.String())
 	}
 }
