@@ -1,0 +1,10 @@
+package main;
+
+message Node {
+	required int64 id = 1;
+	required string value = 2;
+
+	optional int64 left = 3;
+	optional int64 middle = 4;
+	optional int64 right = 5;
+}
