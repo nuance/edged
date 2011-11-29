@@ -2,3 +2,5 @@
 graphd
 *.pb.go
 *.graph
+graphd.sublime-workspace
+graphd.sublime-project
