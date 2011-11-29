@@ -4,7 +4,11 @@ message Node {
 	required int64 id = 1;
 	required string value = 2;
 
-	optional int64 left = 3;
-	optional int64 middle = 4;
-	optional int64 right = 5;
+	message Edge {
+		required int64 left = 1;
+		required int64 prop = 2;
+		required int64 right = 3;
+	};
+
+	optional Edge edge = 3;
 }
