@@ -11,4 +11,4 @@ GOFILES=\
 	node.pb.go
 
 include $(GOROOT)/src/Make.cmd
-include $(GOROOT)/src/pkg/goprotobuf.googlecode.com/hg/Make.protobuf
+include $(GOROOT)/src/goprotobuf.googlecode.com/hg/Make.protobuf

@@ -2,22 +2,22 @@ package main
 
 import (
 	"encoding/binary"
+	"goprotobuf.googlecode.com/hg/proto"
 	"io"
 	"os"
 	"sync"
-	"goprotobuf.googlecode.com/hg/proto"
 )
 
 type Graph struct {
-	Nodes []Node
+	Nodes   []Node
 	Indexes *IndexSet
-	log io.Writer
+	log     io.Writer
 
 	appendLock sync.Locker
 }
 
-func Open(path string) (*Graph, os.Error) {
-	log, err := os.OpenFile(path, os.O_RDWR | os.O_CREATE, 0666)
+func Open(path string) (*Graph, error) {
+	log, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func Open(path string) (*Graph, os.Error) {
 	for {
 		len := int16(0)
 		if err := binary.Read(log, binary.LittleEndian, &len); err != nil {
-			if err == os.EOF {
+			if err == io.EOF {
 				break
 			}
 
@@ -48,7 +48,7 @@ func Open(path string) (*Graph, os.Error) {
 	return g, nil
 }
 
-func (g *Graph) Add(node Node) (int64, os.Error) {
+func (g *Graph) Add(node Node) (int64, error) {
 	g.appendLock.Lock()
 	defer g.appendLock.Unlock()
 
