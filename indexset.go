@@ -2,44 +2,46 @@ package main
 
 var empty = []int64{}
 
-type PairIndex map[string] map[string] []int64
+type piKey struct {
+	a, b string
+}
+
+func key(a, b string) piKey {
+	if a >= b {
+		return piKey{a, b}
+	}
+	return piKey{b, a}
+}
+
+type PairIndex map[piKey] []int64
+
+func (pi PairIndex) Contains(a, b string) bool {
+	_, ok := pi[key(a, b)]
+
+	return ok
+}
 
 func (pi PairIndex) Get(a, b string) []int64 {
-	if _, ok := pi[a]; !ok {
-		return empty
-	} else if _, ok := pi[a][b]; !ok {
+	val, ok := pi[key(a, b)]
+	if !ok {
 		return empty
 	}
 
-	return pi[a][b]
+	return val
 }
 
 func (pi PairIndex) Add(a, b string, id int64) {
-	if _, ok := pi[a]; !ok {
-		pi[a] = map[string] []int64{}
-	}
-
-	if _, ok := pi[b]; !ok {
-		pi[b] = map[string] []int64{}
-	}
-
-	if _, ok := pi[a][b]; !ok {
-		pi[a][b] = []int64{}
-	}
-
-	pi[a][b] = append(pi[a][b], id)
-	pi[b][a] = pi[a][b]
+	k := key(a, b)
+	pi[k] = append(pi[k], id)
 }
 
-func (pi PairIndex) Update(a, b string, id int64) {
-	_, hasA := pi[a]
-	_, hasB := pi[b]
-
-	if !hasA && !hasB {
-		return
+func (pi PairIndex) Set(a, b string, ids []int64) {
+	k := key(a, b)
+	if _, ok := pi[k]; ok {
+		panic("key already exists")
 	}
 
-	pi.Add(a, b, id)
+	pi[k] = ids
 }
 
 type IndexSet struct {
@@ -50,7 +52,7 @@ type IndexSet struct {
 }
 
 func EmptyIndexSet() *IndexSet {
-	return &IndexSet{indexes: map[string] []int64{}, intersections: map[string] map[string] []int64{}}
+	return &IndexSet{indexes: map[string] []int64{}, intersections: PairIndex{}}
 }
 
 func (is IndexSet) Lookup(key string) []int64 {
@@ -85,13 +87,11 @@ func (is *IndexSet) Add(node Node) {
 					continue
 				}
 
-				if len(is.intersections.Get(token, other)) == 0 {
+				if is.intersections.Contains(token, other) {
 					continue
 				}
 
-				for _, docId := range is.Intersection(token, other) {
-					is.intersections.Add(token, other, docId)
-				}
+				is.intersections.Set(token, other, is.Intersection(token, other))
 			}
 		}
 	}
@@ -108,7 +108,9 @@ func (is *IndexSet) Add(node Node) {
 	// update intersection indexes with pairs
 	for idx, token := range tokens {
 		for _, other := range tokens[idx+1:] {
-			is.intersections.Update(token, other, *node.Id)
+			if is.intersections.Contains(token, other) {
+				is.intersections.Add(token, other, *node.Id)
+			}
 		}
 	}
 }
