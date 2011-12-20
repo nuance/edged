@@ -25,6 +25,7 @@ func Open(path string) (*Graph, error) {
 	g.Nodes = []Node{}
 	g.Indexes = EmptyIndexSet()
 	g.appendLock = &sync.Mutex{}
+	g.log = log
 
 	r := api.NodeReader{}
 	n := &Node{}

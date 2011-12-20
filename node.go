@@ -4,6 +4,7 @@ package main
 
 import (
 	"graphd/api"
+	"code.google.com/p/goprotobuf/proto"
 )
 
 type el int8
@@ -36,8 +37,8 @@ func (n *Node) FromApi(an *api.Node) {
 
 func (n Node) Api() *api.Node {
 	res := &api.Node{}
-	*res.Id = n.Id
-	*res.Value = n.Value
+	res.Id = proto.Int64(n.Id)
+	res.Value = proto.String(n.Value)
 	res.Edge = n.Edge.Api()
 
 	return res
@@ -61,9 +62,9 @@ func (e *Edge) Api() *api.Edge {
 	}
 
 	edge := &api.Edge{}
-	*edge.Left = e.Left
-	*edge.Prop = e.Prop
-	*edge.Right = e.Right
+	edge.Left = proto.Int64(e.Left)
+	edge.Prop = proto.Int64(e.Prop)
+	edge.Right = proto.Int64(e.Right)
 
 	return edge
 }

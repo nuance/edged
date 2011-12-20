@@ -16,7 +16,7 @@ func TestVipCreation(t *testing.T) {
 	for i := 0; i < IMPORTANT*2; i++ {
 		node, _ := g.Add(Node{Value: "test"})
 
-		edge := &Node_Edge{}
+		edge := &Edge{}
 		edge.Left = node
 		edge.Prop = color
 		edge.Right = red

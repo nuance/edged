@@ -14,6 +14,6 @@ func main() {
 	}
 
 	for _, node := range g.Nodes {
-		fmt.Printf("%s\n", node)
+		fmt.Println(node)
 	}
 }
