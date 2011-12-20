@@ -3,13 +3,10 @@
 package main
 
 import (
-	"bytes"
-	"code.google.com/p/goprotobuf/proto"
-	"encoding/binary"
-	"io"
+	"graphd/api"
 )
 
-type el int16
+type el int8
 
 const (
 	LEFT el = iota
@@ -19,55 +16,56 @@ const (
 	ID
 )
 
-func (node *Node) Write(w io.Writer) error {
-	buf, err := proto.Marshal(node)
-	if err != nil {
-		panic(err)
-	}
-
-	if err := binary.WriteVarint(w, int64(len(buf))); err != nil {
-		return err
-	}
-
-	_, err = bytes.NewBuffer(buf).WriteTo(w)
-	return err
+type Node struct {
+	Id               int64  `json:"id,omitempty"`
+	Value            string `json:"value,omitempty"`
+	Edge             *Edge   `json:"edge,omitempty"`
 }
 
-type NodeReader []byte
+func (n *Node) FromApi(an *api.Node) {
+	n.Id = *an.Id
+	n.Value = *an.Value
 
-type byteReader struct {
-	io.Reader
+	if an.Edge == nil {
+		n.Edge = nil
+	} else {
+		n.Edge = &Edge{}
+		n.Edge.FromApi(an.Edge)
+	}
 }
 
-func (b byteReader) ReadByte() (byte, error) {
-	buf := []byte{0}
-	_, err := io.Reader(b).Read(buf)
+func (n Node) Api() *api.Node {
+	res := &api.Node{}
+	*res.Id = n.Id
+	*res.Value = n.Value
+	res.Edge = n.Edge.Api()
 
-	return buf[0], err
+	return res
 }
 
-func (nr *NodeReader) Read(r io.Reader) (*Node, error) {
-	l, err := binary.ReadVarint(byteReader{r})
-	if err != nil {
-		return nil, err
-	}
-	length := int(l)
+type Edge struct {
+	Left             int64 `json:"left,omitempty"`
+	Prop             int64 `json:"prop,omitempty"`
+	Right            int64 `json:"right,omitempty"`
+}
 
-	if *nr == nil || cap(*nr) < length {
-		*nr = NodeReader(make([]byte, length))
-	}
-	buf := (*nr)[:length]
+func (e *Edge) FromApi(ae *api.Edge) {
+	e.Left = *ae.Left
+	e.Prop = *ae.Prop
+	e.Right = *ae.Right
+}
 
-	if _, err := io.ReadFull(r, buf); err != nil {
-		return nil, err
-	}
-
-	node := &Node{}
-	if err := proto.Unmarshal(buf, node); err != nil {
-		return nil, err
+func (e *Edge) Api() *api.Edge {
+	if e == nil {
+		return nil
 	}
 
-	return node, nil
+	edge := &api.Edge{}
+	*edge.Left = e.Left
+	*edge.Prop = e.Prop
+	*edge.Right = e.Right
+
+	return edge
 }
 
 var propKey = []string{"L", "P", "R", "V", "I"}
@@ -81,10 +79,10 @@ func Key(element el, id int64) string {
 }
 
 func (n Node) Tokens() []string {
-	result := []string{Key(ID, *n.Id), ValueKey(VALUE, *n.Value)}
+	result := []string{Key(ID, n.Id), ValueKey(VALUE, n.Value)}
 
 	if n.Edge != nil {
-		result = append(result, Key(LEFT, *n.Edge.Left), Key(PROP, *n.Edge.Prop), Key(RIGHT, *n.Edge.Right))
+		result = append(result, Key(LEFT, n.Edge.Left), Key(PROP, n.Edge.Prop), Key(RIGHT, n.Edge.Right))
 	}
 
 	return result

@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"code.google.com/p/goprotobuf/proto"
 	"testing"
 )
 
@@ -10,18 +9,18 @@ func TestVipCreation(t *testing.T) {
 	os.Remove("bench.graph")
 	g, _ := Open("bench.graph")
 
-	red, _ := g.Add(Node{Value: proto.String("red")})
-	color, _ := g.Add(Node{Value: proto.String("color_is")})
+	red, _ := g.Add(Node{Value: "red"})
+	color, _ := g.Add(Node{Value: "color_is"})
 
 	vips := []int64{}
 	for i := 0; i < IMPORTANT*2; i++ {
-		node, _ := g.Add(Node{Value: proto.String("test")})
+		node, _ := g.Add(Node{Value: "test"})
 
 		edge := &Node_Edge{}
-		edge.Left = proto.Int64(node)
-		edge.Prop = proto.Int64(color)
-		edge.Right = proto.Int64(red)
-		vip, _ := g.Add(Node{Value: proto.String(""), Edge: edge})
+		edge.Left = node
+		edge.Prop = color
+		edge.Right = red
+		vip, _ := g.Add(Node{Value: "", Edge: edge})
 		vips = append(vips, vip)
 	}
 

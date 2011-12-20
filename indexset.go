@@ -82,7 +82,7 @@ func (is *IndexSet) Add(node Node) {
 	// possibly create intersection indexes
 	for _, token := range tokens {
 		if len(is.indexes[token]) == IMPORTANT {
-			for other, _ := range is.indexes {
+ 			for other, _ := range is.indexes {
 				if token == other {
 					continue
 				}
@@ -102,14 +102,14 @@ func (is *IndexSet) Add(node Node) {
 		if _, ok := is.indexes[token]; !ok {
 			is.indexes[token] = []int64{}
 		}
-		is.indexes[token] = append(is.indexes[token], *node.Id)
+		is.indexes[token] = append(is.indexes[token], node.Id)
 	}
 
 	// update intersection indexes with pairs
 	for idx, token := range tokens {
 		for _, other := range tokens[idx+1:] {
 			if is.intersections.Contains(token, other) {
-				is.intersections.Add(token, other, *node.Id)
+				is.intersections.Add(token, other, node.Id)
 			}
 		}
 	}

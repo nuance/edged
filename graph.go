@@ -1,8 +1,8 @@
 package main
 
 import (
-	"code.google.com/p/goprotobuf/proto"
 	"io"
+	"graphd/api"
 	"os"
 	"sync"
 )
@@ -21,9 +21,13 @@ func Open(path string) (*Graph, error) {
 		return nil, err
 	}
 
-	g := &Graph{Nodes: []Node{}, Indexes: EmptyIndexSet(), log: log, appendLock: &sync.Mutex{}}
+	g := &Graph{}
+	g.Nodes = []Node{}
+	g.Indexes = EmptyIndexSet()
+	g.appendLock = &sync.Mutex{}
 
-	r := &NodeReader{}
+	r := api.NodeReader{}
+	n := &Node{}
 	for {
 		node, err := r.Read(log)
 		if err == io.EOF {
@@ -32,8 +36,9 @@ func Open(path string) (*Graph, error) {
 			panic(err)
 		}
 
-		g.Nodes = append(g.Nodes, *node)
-		g.Indexes.Add(*node)
+		n.FromApi(node)
+		g.Nodes = append(g.Nodes, *n)
+		g.Indexes.Add(*n)
 	}
 
 	return g, nil
@@ -43,14 +48,14 @@ func (g *Graph) Add(node Node) (int64, error) {
 	g.appendLock.Lock()
 	defer g.appendLock.Unlock()
 
-	node.Id = proto.Int64(int64(len(g.Nodes)))
+	node.Id = int64(len(g.Nodes))
 
 	g.Nodes = append(g.Nodes, node)
 
-	if err := node.Write(g.log); err != nil {
+	if err := node.Api().Write(g.log); err != nil {
 		panic(err)
 	}
 
 	g.Indexes.Add(node)
-	return *node.Id, nil
+	return node.Id, nil
 }

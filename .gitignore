@@ -4,3 +4,5 @@ graphd
 *.graph
 graphd.sublime-workspace
 graphd.sublime-project
+6.out
+_test*

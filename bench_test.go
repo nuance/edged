@@ -2,7 +2,6 @@ package main
 
 import (
 	"testing"
-	"code.google.com/p/goprotobuf/proto"
 	"os"
 )
 
@@ -12,7 +11,7 @@ func BenchmarkSerialInserts(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		if _, err := g.Add(Node{Value: proto.String("test")}); err != nil {
+		if _, err := g.Add(Node{Value: "test"}); err != nil {
 			panic(err)
 		}
 	}
@@ -23,7 +22,7 @@ func BenchmarkOpenDB(b *testing.B) {
 	g, _ := Open("bench.graph")
 
 	for i := 0; i < b.N; i++ {
-		if _, err := g.Add(Node{Value: proto.String("test")}); err != nil {
+		if _, err := g.Add(Node{Value: "test"}); err != nil {
 			panic(err)
 		}
 	}
