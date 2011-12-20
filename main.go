@@ -1,8 +1,8 @@
 package main
 
 import (
+	"code.google.com/p/goprotobuf/proto"
 	"fmt"
-	"goprotobuf.googlecode.com/hg/proto"
 )
 
 func main() {
@@ -10,7 +10,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	if _, err := g.Add(Node{Value: proto.String("test")}); err != nil {
+	if _, err := g.Add(Node{Value: proto.String("test"), Edge: nil}); err != nil {
 		panic(err)
 	}
 

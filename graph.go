@@ -1,8 +1,7 @@
 package main
 
 import (
-	"encoding/binary"
-	"goprotobuf.googlecode.com/hg/proto"
+	"code.google.com/p/goprotobuf/proto"
 	"io"
 	"os"
 	"sync"
@@ -24,25 +23,17 @@ func Open(path string) (*Graph, error) {
 
 	g := &Graph{Nodes: []Node{}, Indexes: EmptyIndexSet(), log: log, appendLock: &sync.Mutex{}}
 
+	r := &NodeReader{}
 	for {
-		len := int16(0)
-		if err := binary.Read(log, binary.LittleEndian, &len); err != nil {
-			if err == io.EOF {
-				break
-			}
-
-			panic(err)
-		}
-		buf := make([]byte, len)
-		if _, err := log.Read(buf); err != nil {
+		node, err := r.Read(log)
+		if err == io.EOF {
+			break
+		} else if err != nil {
 			panic(err)
 		}
 
-		node := Node{}
-		proto.Unmarshal(buf, &node)
-
-		g.Nodes = append(g.Nodes, node)
-		g.Indexes.Add(node)
+		g.Nodes = append(g.Nodes, *node)
+		g.Indexes.Add(*node)
 	}
 
 	return g, nil
@@ -53,24 +44,13 @@ func (g *Graph) Add(node Node) (int64, error) {
 	defer g.appendLock.Unlock()
 
 	node.Id = proto.Int64(int64(len(g.Nodes)))
+
 	g.Nodes = append(g.Nodes, node)
 
-	if data, err := proto.Marshal(&node); err != nil {
-		return 0, err
-	} else {
-		if err := binary.Write(g.log, binary.LittleEndian, int16(len(data))); err != nil {
-			return 0, err
-		}
-
-		if _, err := g.log.Write(data); err != nil {
-			// need to rollback
-			panic(err)
-		}
-
-		g.Indexes.Add(node)
-
-		return *node.Id, nil
+	if err := node.Write(g.log); err != nil {
+		panic(err)
 	}
 
+	g.Indexes.Add(node)
 	return *node.Id, nil
 }
