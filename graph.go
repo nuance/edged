@@ -15,10 +15,26 @@ type Graph struct {
 	appendLock sync.Locker
 }
 
+type fileStub int
+
+func (_ fileStub) Write(b []byte) (int, error) {
+	return len(b), nil
+}
+
+func (_ fileStub) Read(b []byte) (int, error) {
+	return 0, io.EOF
+}
+
 func Open(path string) (*Graph, error) {
-	log, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0666)
-	if err != nil {
-		return nil, err
+	var log io.ReadWriter
+	if path != "" {
+		var err error
+		log, err = os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0666)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		log = fileStub(0)
 	}
 
 	g := &Graph{}
@@ -45,9 +61,23 @@ func Open(path string) (*Graph, error) {
 	return g, nil
 }
 
+func (g *Graph) FindValue(data string) *Node {
+	nodes := g.Indexes.Lookup(ValueKey(VALUE, data))
+
+	if len(nodes) != 1 {
+		return nil
+	}
+
+	return &g.Nodes[nodes[0]]
+}
+
 func (g *Graph) Add(node Node) (int64, error) {
 	g.appendLock.Lock()
 	defer g.appendLock.Unlock()
+
+	if n := g.FindValue(node.Value); n != nil {
+		return n.Id, nil
+	}
 
 	node.Id = int64(len(g.Nodes))
 

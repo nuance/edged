@@ -1,19 +1,23 @@
 package main
 
 import (
-	"fmt"
+	"flag"
 )
 
+var freebaseDumpPath = flag.String("freebase", "", "path to a freebase dump")
+var logPath = flag.String("insert-log", "", "path to write inserts to")
+
 func main() {
-	g, err := Open("test.graph")
+	flag.Parse()
+
+	g, err := Open(*logPath)
 	if err != nil {
 		panic(err)
 	}
-	if _, err := g.Add(Node{Value: "test", Edge: nil}); err != nil {
-		panic(err)
-	}
 
-	for _, node := range g.Nodes {
-		fmt.Println(node)
+	if *freebaseDumpPath != "" {
+		if err := g.ReadFreebase(*freebaseDumpPath); err != nil {
+			panic(err)
+		}
 	}
 }
