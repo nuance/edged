@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"graphd/api"
 	"code.google.com/p/goprotobuf/proto"
 )
@@ -76,7 +77,7 @@ func ValueKey(element el, value string) string {
 }
 
 func Key(element el, id int64) string {
-	return propKey[element] + string(id)
+	return propKey[element] + fmt.Sprintf("%d", id)
 }
 
 func (n Node) Tokens() []string {
