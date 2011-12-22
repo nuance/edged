@@ -11,7 +11,7 @@ func BenchmarkSerialInserts(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		if _, err := g.Add(Node{Value: "test"}); err != nil {
+		if _, err := g.Add(Node{Value: "test" + string(i)}); err != nil {
 			panic(err)
 		}
 	}
@@ -22,7 +22,7 @@ func BenchmarkOpenDB(b *testing.B) {
 	g, _ := Open("bench.graph")
 
 	for i := 0; i < b.N; i++ {
-		if _, err := g.Add(Node{Value: "test"}); err != nil {
+		if _, err := g.Add(Node{Value: "test" + string(i)}); err != nil {
 			panic(err)
 		}
 	}
