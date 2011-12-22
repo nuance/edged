@@ -29,16 +29,31 @@ func TestVipCreation(t *testing.T) {
 		t.Error("no vip index for 'color_is' 'red'")
 	}
 
-	idxVip := g.Indexes.intersection.Get(Token{red, RIGHT}, Token{colorIs, PROP})
+	idxVip, ok := g.Indexes.intersection.Get(Token{red, RIGHT}, Token{colorIs, PROP})
+	if !ok {
+		t.Error("no vip index")
+	}
+
 	if len(idxVip) == len(vips) {
 		for i := 0; i < len(vips); i++ {
 			if idxVip[i] != vips[i] {
+				t.Error("vip index is incorrect")
 				break
 			}
 		}
-
-		return
+	} else {
+		t.Error("vip index is incorrect")
 	}
 
-	t.Error("vip index is incorrect")
+	idxVip = g.Indexes.IntersectTokens([]Token{{red, RIGHT}, {colorIs, PROP}})
+	if len(idxVip) == len(vips) {
+		for i := 0; i < len(vips); i++ {
+			if idxVip[i] != vips[i] {
+				t.Error("vip index is incorrect")
+				break
+			}
+		}
+	} else {
+		t.Error("vip index is incorrect")
+	}
 }

@@ -23,13 +23,9 @@ func (pi PairIndex) Contains(a, b Token) bool {
 	return ok
 }
 
-func (pi PairIndex) Get(a, b Token) []int64 {
+func (pi PairIndex) Get(a, b Token) ([]int64, bool) {
 	val, ok := pi[MakeTokenPair(a, b)]
-	if !ok {
-		return []int64{}
-	}
-
-	return val
+	return val, ok
 }
 
 func (pi PairIndex) Add(a, b Token, id int64) {
@@ -77,13 +73,6 @@ func (is IndexSet) LookupToken(a Token) ([]int64, bool) {
 
 // Compute the intersection for two tokens. Doesn't acquire any locks.
 func (is IndexSet) computeIntersection(a, b Token) []int64 {
-	// This will only exist if one is a vip
-	isect := is.intersection.Get(a, b)
-	if len(isect) > 0 {
-		return isect
-	}
-
-	// neither is a vip, so compute the intersection on the fly
 	aIds, ok := is.LookupToken(a)
 	if !ok {
 		return []int64{}
@@ -97,11 +86,33 @@ func (is IndexSet) computeIntersection(a, b Token) []int64 {
 	return intersect(aIds, bIds)
 }
 
-func (is *IndexSet) IntersectTokens(a, b Token) []int64 {
+func (is *IndexSet) IntersectTokens(tokens []Token) []int64 {
+	if len(tokens) == 0 {
+		return []int64{}
+	}
+
 	is.lock.RLock()
 	defer is.lock.RUnlock()
 
-	return is.computeIntersection(a, b)
+	running, ok := is.LookupToken(tokens[0])
+	if !ok {
+		return []int64{}
+	}
+
+	if len(tokens) == 1 {
+		return running
+	}
+
+	for _, token := range tokens[1:] {
+		next, ok := is.LookupToken(token)
+		if !ok {
+			return []int64{}
+		}
+
+		running = intersect(running, next)
+	}
+
+	return running
 }
 
 const IMPORTANT = 30
