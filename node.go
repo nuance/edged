@@ -3,9 +3,9 @@
 package main
 
 import (
-	"fmt"
-	"edged/api"
 	"code.google.com/p/goprotobuf/proto"
+	"edged/api"
+	"fmt"
 )
 
 type el int8
@@ -19,9 +19,9 @@ const (
 )
 
 type Node struct {
-	Id               int64  `json:"id,omitempty"`
-	Value            string `json:"value,omitempty"`
-	Edge             *Edge   `json:"edge,omitempty"`
+	Id    int64  `json:"id,omitempty"`
+	Value string `json:"value,omitempty"`
+	Edge  *Edge  `json:"edge,omitempty"`
 }
 
 func (n *Node) FromApi(an *api.Node) {
@@ -46,9 +46,9 @@ func (n Node) Api() *api.Node {
 }
 
 type Edge struct {
-	Left             int64 `json:"left,omitempty"`
-	Prop             int64 `json:"prop,omitempty"`
-	Right            int64 `json:"right,omitempty"`
+	Left  int64 `json:"left,omitempty"`
+	Prop  int64 `json:"prop,omitempty"`
+	Right int64 `json:"right,omitempty"`
 }
 
 func (e *Edge) FromApi(ae *api.Edge) {

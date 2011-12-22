@@ -21,7 +21,7 @@ func TestVipCreation(t *testing.T) {
 		edge.Left = node
 		edge.Prop = colorIs
 		edge.Right = red
-		vip, _ := g.Add(Node{Value: "", Edge: edge})
+		vip, _ := g.Add(Node{Value: fmt.Sprintf("test%d is red", i), Edge: edge})
 		vips = append(vips, vip)
 	}
 

@@ -1,14 +1,14 @@
 package main
 
 import (
-	"io"
 	"bufio"
 	"compress/bzip2"
+	"io"
+	"log"
 	"os"
 	"strings"
-	"time"
-	"log"
 	"sync"
+	"time"
 )
 
 type quad struct {
@@ -54,7 +54,7 @@ func quads(r *bufio.Reader) <-chan quad {
 }
 
 type fileProgressReader struct {
-	f *os.File
+	f               *os.File
 	progress, total int64
 
 	reportLock sync.Mutex
@@ -86,8 +86,8 @@ func (f *fileProgressReader) Read(b []byte) (int, error) {
 	n, err := f.f.Read(b)
 	f.progress += int64(n)
 
-	if now := time.Now().Second(); now > f.lastReport + 5 {
-		log.Printf("Progress: %.2f%% (%d / %d bytes)", float32(f.progress) / float32(f.total), f.progress, f.total)
+	if now := time.Now().Second(); now > f.lastReport+5 {
+		log.Printf("Progress: %.2f%% (%d / %d bytes)", float32(f.progress)/float32(f.total), f.progress, f.total)
 		f.lastReport = now
 	}
 

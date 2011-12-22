@@ -13,7 +13,7 @@ func key(a, b string) piKey {
 	return piKey{b, a}
 }
 
-type PairIndex map[piKey] []int64
+type PairIndex map[piKey][]int64
 
 func (pi PairIndex) Contains(a, b string) bool {
 	_, ok := pi[key(a, b)]
@@ -46,13 +46,13 @@ func (pi PairIndex) Set(a, b string, ids []int64) {
 
 type IndexSet struct {
 	// contains key(el, val) => doc ids
-	indexes map[string] []int64
+	indexes map[string][]int64
 	// contains key(el, val) => key(other_el, other_val) => doc_ids
 	intersections PairIndex
 }
 
 func EmptyIndexSet() *IndexSet {
-	return &IndexSet{indexes: map[string] []int64{}, intersections: PairIndex{}}
+	return &IndexSet{indexes: map[string][]int64{}, intersections: PairIndex{}}
 }
 
 func (is IndexSet) Lookup(key string) []int64 {
@@ -82,7 +82,7 @@ func (is *IndexSet) Add(node Node) {
 	// possibly create intersection indexes
 	for _, token := range tokens {
 		if len(is.indexes[token]) == IMPORTANT {
- 			for other, _ := range is.indexes {
+			for other, _ := range is.indexes {
 				if token == other {
 					continue
 				}

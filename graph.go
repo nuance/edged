@@ -1,8 +1,8 @@
 package main
 
 import (
-	"io"
 	"edged/api"
+	"io"
 	"os"
 	"sync"
 )
@@ -61,7 +61,7 @@ func Open(path string) (*Graph, error) {
 	return g, nil
 }
 
-func (g *Graph) FindValue(data string) *Node {
+func (g *Graph) LookupValue(data string) *Node {
 	nodes := g.Indexes.Lookup(ValueKey(VALUE, data))
 
 	if len(nodes) != 1 {
@@ -75,7 +75,7 @@ func (g *Graph) Add(node Node) (int64, error) {
 	g.appendLock.Lock()
 	defer g.appendLock.Unlock()
 
-	if n := g.FindValue(node.Value); node.Value != "" && n != nil {
+	if n := g.LookupValue(node.Value); n != nil {
 		return n.Id, nil
 	}
 
