@@ -1,6 +1,6 @@
 include $(GOROOT)/src/Make.inc
 
-TARG=graphd
+TARG=edged
 
 GOFILES=\
 	graph.go\

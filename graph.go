@@ -2,7 +2,7 @@ package main
 
 import (
 	"io"
-	"graphd/api"
+	"edged/api"
 	"os"
 	"sync"
 )

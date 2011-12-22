@@ -1,6 +1,6 @@
 include $(GOROOT)/src/Make.inc
 
-TARG=graphd/api
+TARG=edged/api
 
 GOFILES=\
 	node.pb.go\

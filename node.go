@@ -4,7 +4,7 @@ package main
 
 import (
 	"fmt"
-	"graphd/api"
+	"edged/api"
 	"code.google.com/p/goprotobuf/proto"
 )
 
