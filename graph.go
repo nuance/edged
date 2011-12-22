@@ -62,13 +62,12 @@ func Open(path string) (*Graph, error) {
 }
 
 func (g *Graph) LookupValue(data string) *Node {
-	nodes := g.Indexes.Lookup(ValueKey(VALUE, data))
-
-	if len(nodes) != 1 {
+	id, ok := g.Indexes.LookupValue(data)
+	if !ok {
 		return nil
 	}
 
-	return &g.Nodes[nodes[0]]
+	return &g.Nodes[id]
 }
 
 func (g *Graph) Add(node Node) (int64, error) {

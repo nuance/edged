@@ -6,7 +6,7 @@ import (
 
 func intersect(a, b []int64) []int64 {
 	if len(a) == 0 || len(b) == 0 {
-		return empty
+		return []int64{}
 	}
 
 	result := []int64{}
@@ -29,5 +29,5 @@ func intersect(a, b []int64) []int64 {
 		}
 	}
 
-	return empty
+	return []int64{}
 }

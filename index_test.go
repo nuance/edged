@@ -25,11 +25,11 @@ func TestVipCreation(t *testing.T) {
 		vips = append(vips, vip)
 	}
 
-	if !g.Indexes.intersections.Contains(Key(RIGHT, red), Key(PROP, colorIs)) {
+	if !g.Indexes.intersection.Contains(Token{red, RIGHT}, Token{colorIs, PROP}) {
 		t.Error("no vip index for 'color_is' 'red'")
 	}
 
-	idxVip := g.Indexes.intersections.Get(Key(RIGHT, red), Key(PROP, colorIs))
+	idxVip := g.Indexes.intersection.Get(Token{red, RIGHT}, Token{colorIs, PROP})
 	if len(idxVip) == len(vips) {
 		for i := 0; i < len(vips); i++ {
 			if idxVip[i] != vips[i] {

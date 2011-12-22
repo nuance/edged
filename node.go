@@ -5,7 +5,6 @@ package main
 import (
 	"code.google.com/p/goprotobuf/proto"
 	"edged/api"
-	"fmt"
 )
 
 type el int8
@@ -70,21 +69,16 @@ func (e *Edge) Api() *api.Edge {
 	return edge
 }
 
-var propKey = []string{"L", "P", "R", "V", "I"}
-
-func ValueKey(element el, value string) string {
-	return propKey[element] + value
+type Token struct {
+	id int64
+	el el
 }
 
-func Key(element el, id int64) string {
-	return propKey[element] + fmt.Sprintf("%d", id)
-}
-
-func (n Node) Tokens() []string {
-	result := []string{Key(ID, n.Id), ValueKey(VALUE, n.Value)}
+func (n Node) Tokens() []Token {
+	result := []Token{{n.Id, ID}}
 
 	if n.Edge != nil {
-		result = append(result, Key(LEFT, n.Edge.Left), Key(PROP, n.Edge.Prop), Key(RIGHT, n.Edge.Right))
+		result = append(result, Token{n.Edge.Left, LEFT}, Token{n.Edge.Prop, PROP}, Token{n.Edge.Right, RIGHT})
 	}
 
 	return result
