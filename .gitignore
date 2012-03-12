@@ -1,8 +1,3 @@
-*.6
-edged
+bin
+pkg
 *.pb.go
-*.graph
-*.sublime-workspace
-*.sublime-project
-6.out
-_test*

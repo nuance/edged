@@ -13,7 +13,9 @@ func (node *Node) Write(w io.Writer) error {
 		panic(err)
 	}
 
-	if err := binary.WriteVarint(w, int64(len(buf))); err != nil {
+	lenBuf := make([]byte, binary.MaxVarintLen64)
+	l := binary.PutVarint(lenBuf, int64(len(buf)))
+	if _, err := bytes.NewBuffer(lenBuf[:l]).WriteTo(w); err != nil {
 		return err
 	}
 
