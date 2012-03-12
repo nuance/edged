@@ -21,8 +21,7 @@ func quads(r *bufio.Reader) <-chan quad {
 	go func(result chan<- quad) {
 		defer close(result)
 
-		err := error(nil)
-		for err == nil {
+		for {
 			left, err := r.ReadString('\t')
 			if err != nil {
 				return
@@ -43,11 +42,9 @@ func quads(r *bufio.Reader) <-chan quad {
 				return
 			}
 
-			// sliceing to remove trailing whitespace. This is unicode safe, since we split on bytes.
+			// slicing to remove trailing whitespace. This is unicode safe, since we split on bytes.
 			result <- quad{left[:len(left)-1], prop[:len(prop)-1], right[:len(right)-1], data[:len(data)-1]}
 		}
-
-		close(result)
 	}(quads)
 
 	return quads
@@ -86,8 +83,8 @@ func (f *fileProgressReader) Read(b []byte) (int, error) {
 	n, err := f.f.Read(b)
 	f.progress += int64(n)
 
-	if now := time.Now().Second(); now > f.lastReport+5 {
-		log.Printf("Progress: %.2f%% (%d / %d bytes)", float32(f.progress)/float32(f.total), f.progress, f.total)
+	if now := time.Now().Second(); now > f.lastReport {
+		log.Printf("Progress: %.2f%% (%d / %d bytes)", 100*float32(f.progress)/float32(f.total), f.progress, f.total)
 		f.lastReport = now
 	}
 
