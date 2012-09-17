@@ -1,12 +1,18 @@
 package main
 
-import (
-	"sort"
-)
+type sortedIndex []int64
 
-func intersect(a, b []int64) []int64 {
+func makeSortedIndex() sortedIndex {
+	return []int64{}
+}
+
+func (si *sortedIndex) Add(id int64) {
+	*si = append(*si, id)
+}
+
+func (a sortedIndex) intersect(b sortedIndex) sortedIndex {
 	if len(a) == 0 || len(b) == 0 {
-		return []int64{}
+		return makeSortedIndex()
 	}
 
 	result := []int64{}
@@ -17,17 +23,15 @@ func intersect(a, b []int64) []int64 {
 			a = a[1:]
 			b = b[1:]
 		} else if a[0] < b[0] {
-			next := sort.Search(len(a), func(i int) bool { return a[i] > b[0] })
-			a = a[next:]
+			a = a[1:]
 		} else {
-			next := sort.Search(len(b), func(i int) bool { return b[i] > a[0] })
-			b = b[next:]
+			b = b[1:]
 		}
 
 		if len(a) == 0 || len(b) == 0 {
-			return result
+			return sortedIndex(result)
 		}
 	}
 
-	return []int64{}
+	return makeSortedIndex()
 }

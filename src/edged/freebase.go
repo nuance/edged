@@ -83,7 +83,7 @@ func (f *fileProgressReader) Read(b []byte) (int, error) {
 	n, err := f.f.Read(b)
 	f.progress += int64(n)
 
-	if now := time.Now().Second(); now > f.lastReport {
+	if now := time.Now().Second(); now > f.lastReport || err == io.EOF {
 		log.Printf("Progress: %.2f%% (%d / %d bytes)", 100*float32(f.progress)/float32(f.total), f.progress, f.total)
 		f.lastReport = now
 	}
@@ -118,7 +118,7 @@ func (graph *Graph) ReadFreebase(path string) error {
 			return err
 		}
 
-		_, err = graph.Add(Node{Value: quad.data, Edge: &Edge{Left: left, Prop: prop, Right: right}})
+		_, err = graph.Add(Node{Value: quad.data, Edge: Edge{Left: left, Prop: prop, Right: right}})
 		if err != nil {
 			return err
 		}

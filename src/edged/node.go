@@ -20,17 +20,14 @@ const (
 type Node struct {
 	Id    int64  `json:"id,omitempty"`
 	Value string `json:"value,omitempty"`
-	Edge  *Edge  `json:"edge,omitempty"`
+	Edge  Edge   `json:"edge,omitempty"`
 }
 
 func (n *Node) FromApi(an *api.Node) {
 	n.Id = *an.Id
 	n.Value = *an.Value
 
-	if an.Edge == nil {
-		n.Edge = nil
-	} else {
-		n.Edge = &Edge{}
+	if an.Edge != nil {
 		n.Edge.FromApi(an.Edge)
 	}
 }
@@ -77,7 +74,7 @@ type Token struct {
 func (n Node) Tokens() []Token {
 	result := []Token{{n.Id, ID}}
 
-	if n.Edge != nil {
+	if n.Edge.Left != 0 {
 		result = append(result, Token{n.Edge.Left, LEFT}, Token{n.Edge.Prop, PROP}, Token{n.Edge.Right, RIGHT})
 	}
 
