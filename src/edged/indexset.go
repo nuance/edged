@@ -1,98 +1,111 @@
 package main
 
-type TokenPair [2]Token
+import (
+	"fmt"
+)
 
-func MakeTokenPair(a, b Token) TokenPair {
-	if a.el > b.el || (a.el == b.el && a.id >= b.id) {
-		return TokenPair{a, b}
+type tokenPair [2]Token
+
+func makeTokenPair(a, b Token) tokenPair {
+	if a > b {
+		return tokenPair{a, b}
 	}
-	return TokenPair{b, a}
+	return tokenPair{b, a}
 }
 
-type PairIndex map[TokenPair]sortedIndex
+type elIndex [1 << elBits]*sortedIndex
 
-func (pi PairIndex) Contains(a, b Token) bool {
-	_, ok := pi[MakeTokenPair(a, b)]
+type indexSet struct {
+	// Value => id hash index
+	value map[string]id
 
-	return ok
+	// id->el->idx lookup indexes
+	token []elIndex
+
+	// Materialized intersection indexes
+	vips map[Token]bool
+	pair map[tokenPair]*sortedIndex
 }
 
-func (pi PairIndex) Get(a, b Token) ([]int64, bool) {
-	val, ok := pi[MakeTokenPair(a, b)]
-	return val, ok
+func makeIndexSet() *indexSet {
+	is := indexSet{}
+
+	is.value = map[string]id{}
+
+	// include an empty elIndex for 0 to simplify indexing (since ids start at 1)
+	is.token = []elIndex{elIndex{}}
+
+	is.vips = map[Token]bool{}
+	is.pair = map[tokenPair]*sortedIndex{}
+
+	return &is
 }
 
-func (pi PairIndex) Add(a, b Token, id int64) {
-	k := MakeTokenPair(a, b)
-	idx := pi[k]
-	idx.Add(id)
-	pi[k] = idx
+func (is indexSet) lookupByValue(val string) id {
+	return is.value[val]
 }
 
-func (pi PairIndex) Set(a, b Token, ids []int64) {
-	k := MakeTokenPair(a, b)
-	if _, ok := pi[k]; ok {
-		panic("key already exists")
+func (is *indexSet) setByValue(val string, id id) {
+	if _, ok := is.value[val]; ok {
+		panic("Value is non-unique")
+	}
+	is.value[val] = id
+}
+
+func (is indexSet) lookupByToken(t Token) *sortedIndex {
+	if int64(t.id()) < int64(len(is.token)) {
+		return is.token[t.id()][t.el()]
+	}
+	return nil
+}
+
+func (is *indexSet) ensureByToken(t Token) {
+	if int64(t.id()) == int64(len(is.token)) {
+		is.token = append(is.token, elIndex{})
+	} else if int64(t.id()) > int64(len(is.token)) {
+		panic(fmt.Sprintf("id out-of-order: %d vs. current max %d", int64(t.id()), len(is.token)))
 	}
 
-	pi[k] = ids
+	if is.token[t.id()][t.el()] == nil {
+		is.token[t.id()][t.el()] = &sortedIndex{}
+	}
 }
 
-type IndexSet struct {
-	id    map[Token]sortedIndex
-	value map[string]int64
-	vips  []Token
-	// contains key(el, val) => key(other_el, other_val) => doc_ids
-	intersection PairIndex
+// Compute the intersection for two tokens.
+func (is indexSet) lookupPair(a, b Token) sortedIndex {
+	if idx, ok := is.pair[makeTokenPair(a, b)]; ok {
+		return *idx
+	}
+
+	aIdx := is.lookupByToken(a)
+	bIdx := is.lookupByToken(b)
+	if aIdx == nil || bIdx == nil {
+		return nil
+	}
+
+	return aIdx.intersect(*bIdx)
 }
 
-func EmptyIndexSet() *IndexSet {
-	i := IndexSet{}
-
-	i.id = map[Token]sortedIndex{}
-	i.value = map[string]int64{}
-	i.vips = []Token{}
-	i.intersection = PairIndex{}
-
-	return &i
-}
-
-func (is IndexSet) LookupValue(val string) (int64, bool) {
-	id, ok := is.value[val]
-	return id, ok
-}
-
-func (is IndexSet) LookupToken(a Token) (sortedIndex, bool) {
-	ids, ok := is.id[a]
-	return ids, ok
-}
-
-// Compute the intersection for two tokens. Doesn't acquire any locks.
-func (is IndexSet) computeIntersection(a, b Token) []int64 {
-	return is.id[a].intersect(is.id[b])
-}
-
-func (is *IndexSet) IntersectTokens(tokens []Token) []int64 {
+func (is indexSet) lookupByTokens(tokens []Token) sortedIndex {
 	if len(tokens) == 0 {
-		return []int64{}
+		return nil
 	}
 
-	running, ok := is.LookupToken(tokens[0])
-	if !ok {
-		return []int64{}
+	first := is.lookupByToken(tokens[0])
+	if first == nil {
+		return nil
+	} else if len(tokens) == 1 {
+		return *first
 	}
 
-	if len(tokens) == 1 {
-		return running
-	}
-
+	running := *first
 	for _, token := range tokens[1:] {
-		next, ok := is.LookupToken(token)
-		if !ok {
-			return []int64{}
+		next := is.lookupByToken(token)
+		if next == nil {
+			return nil
 		}
 
-		running = running.intersect(next)
+		running = running.intersect(*next)
 	}
 
 	return running
@@ -100,19 +113,17 @@ func (is *IndexSet) IntersectTokens(tokens []Token) []int64 {
 
 const IMPORTANT = 30
 
-func (is *IndexSet) makeVip(token Token) {
-	for _, other := range is.vips {
-		if is.intersection.Contains(token, other) {
-			return
-		}
-
-		is.intersection.Set(token, other, is.id[token].intersect(is.id[other]))
+func (is *indexSet) makeVip(token Token) {
+	t := is.lookupByToken(token)
+	for other, _ := range is.vips {
+		si := t.intersect(*is.lookupByToken(other))
+		is.pair[makeTokenPair(token, other)] = &si
 	}
 
-	is.vips = append(is.vips, token)
+	is.vips[token] = true
 }
 
-func (is *IndexSet) Add(node Node) {
+func (is *indexSet) add(node Node) {
 	if _, ok := is.value[node.Value]; ok {
 		panic("Value already set")
 	}
@@ -122,14 +133,12 @@ func (is *IndexSet) Add(node Node) {
 
 	// ensure id lists for each token
 	for _, token := range tokens {
-		if _, ok := is.id[token]; !ok {
-			is.id[token] = makeSortedIndex()
-		}
+		is.ensureByToken(token)
 	}
 
-	// possibly create intersection indexes
 	for _, token := range tokens {
-		if len(is.id[token]) == IMPORTANT {
+		// possibly create intersection indexes
+		if len(*is.lookupByToken(token)) == IMPORTANT {
 			is.makeVip(token)
 		}
 	}
@@ -137,16 +146,16 @@ func (is *IndexSet) Add(node Node) {
 	// add the token to the standard indexes. Do this after you create new
 	// intersection indexes so that the next update step is consistent.
 	for _, token := range tokens {
-		idx := is.id[token]
-		idx.Add(node.Id)
-		is.id[token] = idx
+		is.lookupByToken(token).add(node.Id)
 	}
 
 	// update intersection indexes with pairs
 	for idx, token := range tokens {
-		for _, other := range tokens[idx+1:] {
-			if is.intersection.Contains(token, other) {
-				is.intersection.Add(token, other, node.Id)
+		if _, ok := is.vips[token]; ok {
+			for _, other := range tokens[idx+1:] {
+				if pair := is.pair[makeTokenPair(token, other)]; pair != nil {
+					pair.add(node.Id)
+				}
 			}
 		}
 	}

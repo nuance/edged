@@ -13,30 +13,27 @@ func TestVipCreation(t *testing.T) {
 	red, _ := g.Add(Node{Value: "red"})
 	colorIs, _ := g.Add(Node{Value: "color_is"})
 
-	vips := []int64{}
+	vips := []id{}
 	for i := 0; i < IMPORTANT+1; i++ {
 		node, _ := g.Add(Node{Value: fmt.Sprintf("test%d", i)})
 
 		edge := Edge{}
-		edge.Left = node
-		edge.Prop = colorIs
-		edge.Right = red
+		edge.Left = id(node)
+		edge.Prop = id(colorIs)
+		edge.Right = id(red)
 		vip, _ := g.Add(Node{Value: fmt.Sprintf("test%d is red", i), Edge: edge})
-		vips = append(vips, vip)
+		vips = append(vips, id(vip))
 	}
 
-	if !g.Indexes.intersection.Contains(Token{red, RIGHT}, Token{colorIs, PROP}) {
+	pair := makeTokenPair(makeToken(id(red), RIGHT), makeToken(id(colorIs), PROP))
+	if _, ok := g.indexes.pair[pair]; !ok {
 		t.Error("no vip index for 'color_is' 'red'")
 	}
 
-	idxVip, ok := g.Indexes.intersection.Get(Token{red, RIGHT}, Token{colorIs, PROP})
-	if !ok {
-		t.Error("no vip index")
-	}
-
-	if len(idxVip) == len(vips) {
+	idxVip := g.indexes.pair[pair]
+	if len(*idxVip) == len(vips) {
 		for i := 0; i < len(vips); i++ {
-			if idxVip[i] != vips[i] {
+			if (*idxVip)[i] != vips[i] {
 				t.Error("vip index is incorrect")
 				break
 			}
@@ -45,10 +42,10 @@ func TestVipCreation(t *testing.T) {
 		t.Error("vip index is incorrect")
 	}
 
-	idxVip = g.Indexes.IntersectTokens([]Token{{red, RIGHT}, {colorIs, PROP}})
-	if len(idxVip) == len(vips) {
+	computed := g.indexes.lookupByTokens([]Token{makeToken(id(red), RIGHT), makeToken(id(colorIs), PROP)})
+	if len(computed) == len(vips) {
 		for i := 0; i < len(vips); i++ {
-			if idxVip[i] != vips[i] {
+			if computed[i] != vips[i] {
 				t.Error("vip index is incorrect")
 				break
 			}

@@ -7,8 +7,8 @@ import (
 )
 
 type Graph struct {
-	Nodes   []Node
-	Indexes *IndexSet
+	maxId   id
+	indexes *indexSet
 	log     *io.Writer
 }
 
@@ -25,8 +25,7 @@ func Open(path string) (*Graph, error) {
 	}
 
 	g := &Graph{}
-	g.Nodes = []Node{}
-	g.Indexes = EmptyIndexSet()
+	g.indexes = makeIndexSet()
 	if log != nil {
 		w := io.Writer(*log)
 		g.log = &w
@@ -42,30 +41,20 @@ func Open(path string) (*Graph, error) {
 			}
 
 			n.FromApi(node)
-			g.Nodes = append(g.Nodes, *n)
-			g.Indexes.Add(*n)
+			g.indexes.add(*n)
 		}
 	}
 
 	return g, nil
 }
 
-func (g *Graph) LookupValue(data string) *Node {
-	id, ok := g.Indexes.LookupValue(data)
-	if !ok {
-		return nil
-	}
-
-	return &g.Nodes[id]
-}
-
 func (g *Graph) Add(node Node) (int64, error) {
-	if n := g.LookupValue(node.Value); n != nil {
-		return n.Id, nil
+	if id := g.indexes.lookupByValue(node.Value); id != 0 {
+		return int64(id), nil
 	}
 
-	node.Id = int64(len(g.Nodes))
-	g.Nodes = append(g.Nodes, node)
+	g.maxId += 1
+	node.Id = g.maxId
 
 	if g.log != nil {
 		if err := node.Api().Write(*g.log); err != nil {
@@ -73,6 +62,6 @@ func (g *Graph) Add(node Node) (int64, error) {
 		}
 	}
 
-	g.Indexes.Add(node)
-	return node.Id, nil
+	g.indexes.add(node)
+	return int64(node.Id), nil
 }

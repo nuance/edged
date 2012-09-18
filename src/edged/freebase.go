@@ -118,7 +118,7 @@ func (graph *Graph) ReadFreebase(path string) error {
 			return err
 		}
 
-		_, err = graph.Add(Node{Value: quad.data, Edge: Edge{Left: left, Prop: prop, Right: right}})
+		_, err = graph.Add(Node{Value: quad.data, Edge: Edge{Left: id(left), Prop: id(prop), Right: id(right)}})
 		if err != nil {
 			return err
 		}

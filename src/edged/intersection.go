@@ -1,21 +1,17 @@
 package main
 
-type sortedIndex []int64
+type sortedIndex []id
 
-func makeSortedIndex() sortedIndex {
-	return []int64{}
-}
-
-func (si *sortedIndex) Add(id int64) {
+func (si *sortedIndex) add(id id) {
 	*si = append(*si, id)
 }
 
 func (a sortedIndex) intersect(b sortedIndex) sortedIndex {
 	if len(a) == 0 || len(b) == 0 {
-		return makeSortedIndex()
+		return nil
 	}
 
-	result := []int64{}
+	result := []id{}
 	for {
 		if a[0] == b[0] {
 			result = append(result, a[0])
@@ -33,5 +29,5 @@ func (a sortedIndex) intersect(b sortedIndex) sortedIndex {
 		}
 	}
 
-	return makeSortedIndex()
+	return nil
 }
