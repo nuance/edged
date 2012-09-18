@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"compress/bzip2"
+	"compress/gzip"
 	"io"
 	"log"
 	"os"
@@ -100,6 +101,11 @@ func (graph *Graph) ReadFreebase(path string) error {
 	r := io.Reader(f)
 	if strings.HasSuffix(path, ".bz2") {
 		r = bzip2.NewReader(r)
+	} else if strings.HasSuffix(path, ".gz") {
+		r, err = gzip.NewReader(r)
+		if err != nil {
+			return err
+		}
 	}
 
 	for quad := range quads(bufio.NewReader(r)) {
